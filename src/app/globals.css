@@ -3,6 +3,10 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
+  --light-bg:     #F5F2EC;
+  --light-fg:     #1A1A18;
+  --light-muted:  #6B6760;
+  --light-border: #E2DDD5;
 }
 
 @theme inline {
@@ -13,28 +17,25 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  /* Fallback if Inter/SF Pro are not loaded yet */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
   overscroll-behavior: none;
 }
 
-/* Custom dark scrollbar */
+/* Scrollbar — warm/light to match the light sections */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: var(--light-bg);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
-  border-radius: 4px;
+  background: #C5C0B8;
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #333333;
+  background: #A8A39C;
 }
 
 /* iOS safe-area support — prevents content hiding behind home bar */

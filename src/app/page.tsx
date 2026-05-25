@@ -1,69 +1,122 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValueEvent } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useSpring,
+  useMotionValueEvent,
+} from 'framer-motion';
 import MatchaCanvas from '@/components/MatchaCanvas';
+
+// ─── Animation variants ───────────────────────────────────────────────────────
+
+const cardVariant = {
+  hidden: { opacity: 0, y: 32 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.75, ease: [0.25, 0, 0, 1] as const },
+  },
+};
+
+const staggerCards = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.13, delayChildren: 0.05 },
+  },
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [loadProgress, setLoadProgress] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen]         = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [headerDark, setHeaderDark]     = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Track window scroll to show mobile header background
+  // Track scroll: detect mobile-scroll-bg + light-section transition
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, 'change', (latest) => {
     setHeaderScrolled(latest > 80);
+    // Hero container is h-[400vh]; we enter the light section after 300vh of scroll
+    const heroEnd = 3 * (typeof window !== 'undefined' ? window.innerHeight : 900);
+    setHeaderDark(latest < heroEnd);
   });
 
+  // Scroll-driven canvas progress
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end'],
   });
-
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001,
   });
 
-  // Beat A: 0 - 20%
-  const opacityA = useTransform(smoothProgress, [0, 0.1, 0.1, 0.2], [0, 1, 1, 0]);
-  const yA = useTransform(smoothProgress, [0, 0.1, 0.1, 0.2], [20, 0, 0, -20]);
+  // ── Beat keyframe transforms ─────────────────────────────────────────────
+  const opacityA = useTransform(smoothProgress, [0, 0.1,  0.1,  0.2 ], [0, 1, 1, 0]);
+  const yA       = useTransform(smoothProgress, [0, 0.1,  0.1,  0.2 ], [20, 0, 0, -20]);
 
-  // Beat B: 25% - 45%
   const opacityB = useTransform(smoothProgress, [0.25, 0.35, 0.35, 0.45], [0, 1, 1, 0]);
-  const yB = useTransform(smoothProgress, [0.25, 0.35, 0.35, 0.45], [20, 0, 0, -20]);
+  const yB       = useTransform(smoothProgress, [0.25, 0.35, 0.35, 0.45], [20, 0, 0, -20]);
 
-  // Beat C: 50% - 70%
-  const opacityC = useTransform(smoothProgress, [0.5, 0.6, 0.6, 0.7], [0, 1, 1, 0]);
-  const yC = useTransform(smoothProgress, [0.5, 0.6, 0.6, 0.7], [20, 0, 0, -20]);
+  const opacityC = useTransform(smoothProgress, [0.5, 0.6,  0.6,  0.7 ], [0, 1, 1, 0]);
+  const yC       = useTransform(smoothProgress, [0.5, 0.6,  0.6,  0.7 ], [20, 0, 0, -20]);
 
-  // Beat D: 75% - 95%
   const opacityD = useTransform(smoothProgress, [0.75, 0.85, 0.85, 0.95], [0, 1, 1, 0]);
-  const yD = useTransform(smoothProgress, [0.75, 0.85, 0.85, 0.95], [20, 0, 0, -20]);
+  const yD       = useTransform(smoothProgress, [0.75, 0.85, 0.85, 0.95], [20, 0, 0, -20]);
+
+  // ── Header state logic ───────────────────────────────────────────────────
+  const isLightSection = !headerDark;
+
+  let headerBg: string;
+  if (menuOpen) {
+    // Menu open → always dark to match the overlay
+    headerBg = 'bg-[#1A1A18]';
+  } else if (isLightSection) {
+    // Below the hero → light solid header
+    headerBg = 'bg-[#F5F2EC] border-b border-[#E2DDD5]';
+  } else if (headerScrolled) {
+    // Scrolled within dark hero → blur on mobile only
+    headerBg =
+      'bg-black/80 backdrop-blur-md border-b border-white/10 ' +
+      'md:bg-transparent md:backdrop-blur-none md:border-transparent';
+  } else {
+    // Very top of dark hero → difference blend so logo always shows
+    headerBg = 'mix-blend-difference bg-transparent';
+  }
+
+  const logoInvert     = menuOpen || !isLightSection; // white logo on dark bg
+  const navColor       = isLightSection && !menuOpen ? 'text-[#1A1A18]' : 'text-white';
+  const burgerColor    = isLightSection && !menuOpen ? 'text-[#1A1A18]' : 'text-white';
 
   return (
-    <main className="bg-black text-white font-sans selection:bg-white/30">
-      {/* Loading Screen */}
+    <main className="bg-black text-[#1A1A18] font-sans selection:bg-black/10">
+
+      {/* ── Loading screen ───────────────────────────────────────────── */}
       {loadProgress < 100 && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black">
-          <div className="text-white/60 text-sm mb-4 tracking-widest uppercase font-mono">
+          <div className="text-white/40 text-[10px] mb-5 tracking-[0.35em] uppercase font-mono">
             Loading Experience
           </div>
-          <div className="w-64 h-[1px] bg-white/20 relative">
-            <div 
-              className="absolute left-0 top-0 h-full bg-white transition-all duration-300 ease-out" 
+          <div className="w-48 h-px bg-white/20 relative">
+            <div
+              className="absolute left-0 top-0 h-full bg-white transition-all duration-300 ease-out"
               style={{ width: `${loadProgress}%` }}
             />
           </div>
-          <div className="text-white mt-4 font-mono text-xs">
+          <div className="text-white/30 mt-4 font-mono text-[10px] tracking-widest">
             {loadProgress}%
           </div>
         </div>
       )}
 
-      {/* Mobile full-screen menu overlay */}
+      {/* ── Mobile full-screen menu overlay ─────────────────────────── */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -72,11 +125,11 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center md:hidden"
+            className="fixed inset-0 z-40 bg-[#1A1A18] flex flex-col items-center justify-center md:hidden"
           >
-            <nav className="flex flex-col items-center gap-10">
+            <nav className="flex flex-col items-center gap-11">
               {[
-                { label: 'Menu', href: '#' },
+                { label: 'Menu',      href: '#' },
                 { label: 'Our Story', href: '#' },
                 { label: 'Locations', href: '#' },
               ].map((item, i) => (
@@ -84,57 +137,76 @@ export default function Home() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 22 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.07 * i, ease: [0.25, 0, 0, 1] }}
-                  className="text-4xl font-bold tracking-widest uppercase text-white hover:opacity-50 transition-opacity"
+                  transition={{ duration: 0.35, delay: 0.07 * i, ease: [0.25, 0, 0, 1] }}
+                  className="text-3xl font-bold tracking-[0.15em] uppercase text-white hover:opacity-50 transition-opacity"
                 >
                   {item.label}
                 </motion.a>
               ))}
             </nav>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className="absolute bottom-10 text-white/25 text-[10px] font-mono tracking-[0.3em] uppercase"
+            >
+              BARCELONA · MADRID
+            </motion.p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Fixed Header */}
-      <header className={`
-        fixed top-0 left-0 right-0 z-50
-        flex justify-between items-center pointer-events-none
-        transition-all duration-300
-        ${loadProgress === 100 ? 'opacity-100' : 'opacity-0'}
-        ${menuOpen
-          ? 'px-5 py-4 md:px-8 md:py-6 bg-transparent'
-          : headerScrolled
-            ? 'px-5 py-3 md:px-8 md:py-6 bg-black/85 backdrop-blur-md border-b border-white/10 md:bg-transparent md:backdrop-blur-none md:border-transparent'
-            : 'px-5 py-4 md:px-8 md:py-6 mix-blend-difference bg-transparent'
-        }
-      `}>
+      {/* ── Fixed header ─────────────────────────────────────────────── */}
+      <header
+        className={`
+          fixed top-0 left-0 right-0 z-50
+          flex items-center justify-between
+          pointer-events-none
+          px-5 py-4 md:px-10 md:py-5
+          transition-all duration-500
+          ${headerBg}
+          ${loadProgress === 100 ? 'opacity-100' : 'opacity-0'}
+        `}
+      >
+        {/* Logo */}
         <a href="/" aria-label="Back to top" className="pointer-events-auto">
-          <img src="/logo.png" alt="EAT.NUDES" className="h-7 md:h-8 invert object-contain" />
+          <img
+            src="/logo.png"
+            alt="EAT.NUDES"
+            className={`h-7 md:h-8 object-contain transition-all duration-500 ${logoInvert ? 'invert' : ''}`}
+          />
         </a>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-mono tracking-widest uppercase text-white pointer-events-auto">
-          <a href="#" className="hover:opacity-60 transition-opacity">Menu</a>
-          <a href="#" className="hover:opacity-60 transition-opacity">Our Story</a>
-          <a href="#" className="hover:opacity-60 transition-opacity">Find Us</a>
+        <nav
+          className={`
+            hidden md:flex items-center gap-9
+            text-[11px] font-mono tracking-[0.22em] uppercase
+            pointer-events-auto transition-colors duration-500
+            ${navColor}
+          `}
+        >
+          <a href="#" className="hover:opacity-50 transition-opacity">Menu</a>
+          <a href="#" className="hover:opacity-50 transition-opacity">Our Story</a>
+          <a href="#" className="hover:opacity-50 transition-opacity">Find Us</a>
         </nav>
 
-        {/* Mobile hamburger / close button */}
+        {/* Mobile hamburger / close */}
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="md:hidden pointer-events-auto text-white p-1 -mr-1"
+          className={`md:hidden pointer-events-auto p-1 -mr-1 transition-colors duration-500 ${burgerColor}`}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
         >
           {menuOpen ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="4" y1="7" x2="20" y2="7" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="4" y1="7"  x2="20" y2="7"  />
               <line x1="4" y1="12" x2="20" y2="12" />
               <line x1="4" y1="17" x2="20" y2="17" />
             </svg>
@@ -142,18 +214,18 @@ export default function Home() {
         </button>
       </header>
 
-      {/* Main Experience */}
-      <div 
-        ref={containerRef} 
-        className={`relative w-full h-[400vh] transition-opacity duration-1000 ${loadProgress === 100 ? 'opacity-100' : 'opacity-0'}`}
+      {/* ── Hero — always dark, canvas-driven ───────────────────────── */}
+      <div
+        ref={containerRef}
+        className={`relative w-full h-[400vh] transition-opacity duration-1000 ${
+          loadProgress === 100 ? 'opacity-100' : 'opacity-0'
+        }`}
       >
         <div className="sticky top-0 h-screen w-full overflow-hidden">
-          {/* Canvas Component */}
           <MatchaCanvas onLoadProgress={setLoadProgress} smoothProgress={smoothProgress} />
-          
-          {/* Overlays Wrapper */}
+
           <div className="absolute inset-0 pointer-events-none flex flex-col justify-center">
-            
+
             {/* Beat A */}
             <motion.div
               style={{ opacity: opacityA, y: yA }}
@@ -213,63 +285,143 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Post-Scroll Content Sections */}
-      <div className={`relative z-10 bg-black ${loadProgress === 100 ? 'opacity-100' : 'opacity-0'} transition-opacity duration-1000`}>
-        {/* Ingredients / Craftsmanship */}
-        <section className="py-20 md:py-32 px-6 md:px-24 border-t border-white/10">
+      {/* ── Light-theme content ──────────────────────────────────────── */}
+      <div
+        className={`relative z-10 bg-[#F5F2EC] transition-opacity duration-1000 ${
+          loadProgress === 100 ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+
+        {/* — Ingredients / Craftsmanship — */}
+        <section className="py-24 md:py-40 px-6 md:px-24 border-t border-[#E2DDD5]">
           <div className="max-w-5xl mx-auto">
-            <h3 className="text-2xl sm:text-3xl md:text-5xl font-light mb-10 md:mb-16">Clean. Fresh. Obsessive.</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-24">
-              <div>
-                <div className="h-[1px] w-12 bg-white/50 mb-6" />
-                <h4 className="text-xl font-bold mb-4">No Filler. Ever.</h4>
-                <p className="text-white/60 font-light leading-relaxed">Artificial colours, flavours, preservatives — none of them made the cut. If we can't say it out loud, it's not going in.</p>
-              </div>
-              <div>
-                <div className="h-[1px] w-12 bg-white/50 mb-6" />
-                <h4 className="text-xl font-bold mb-4">Made Every Morning</h4>
-                <p className="text-white/60 font-light leading-relaxed">Rolls wrapped, bowls built, smoothies blended fresh daily. Because day-old health food isn't health food.</p>
-              </div>
-              <div>
-                <div className="h-[1px] w-12 bg-white/50 mb-6" />
-                <h4 className="text-xl font-bold mb-4">Your Way</h4>
-                <p className="text-white/60 font-light leading-relaxed">Vegan, gluten-free, high-protein — you set the rules. We make sure you leave satisfied, whatever that looks like for you.</p>
-              </div>
-            </div>
+
+            <motion.h3
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.9, ease: [0.25, 0, 0, 1] as const }}
+              className="text-2xl sm:text-3xl md:text-5xl font-light text-[#1A1A18] mb-14 md:mb-20 max-w-xl leading-tight"
+            >
+              Clean.<br />Fresh.<br />Obsessive.
+            </motion.h3>
+
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-20"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.1 }}
+              variants={staggerCards}
+            >
+              {[
+                {
+                  title: 'No Filler. Ever.',
+                  body:  "Artificial colours, flavours, preservatives — none of them made the cut. If we can't say it out loud, it's not going in.",
+                },
+                {
+                  title: 'Made Every Morning',
+                  body:  "Rolls wrapped, bowls built, smoothies blended fresh daily. Because day-old health food isn't health food.",
+                },
+                {
+                  title: 'Your Way',
+                  body:  'Vegan, gluten-free, high-protein — you set the rules. We make sure you leave satisfied, whatever that looks like for you.',
+                },
+              ].map((card) => (
+                <motion.div key={card.title} variants={cardVariant}>
+                  <div className="h-px w-10 bg-[#1A1A18]/20 mb-7" />
+                  <h4 className="text-base font-bold text-[#1A1A18] mb-3 tracking-wide">{card.title}</h4>
+                  <p className="text-[#6B6760] font-light leading-relaxed text-[15px]">{card.body}</p>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </section>
 
-        {/* Call to Action Banner */}
-        <section className="py-24 md:py-48 px-6 md:px-24 border-t border-white/10 relative overflow-hidden flex flex-col items-center text-center group cursor-pointer">
-          {/* Subtle hover glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+        {/* — CTA Banner — */}
+        <section className="py-28 md:py-56 px-6 md:px-24 border-t border-[#E2DDD5] relative overflow-hidden flex flex-col items-center text-center">
 
-          <h2 className="text-[clamp(2.25rem,8vw,6rem)] font-black tracking-tighter mb-6 md:mb-8 max-w-5xl z-10">
+          {/* Wordmark as a ghosted watermark behind the text */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+            <img
+              src="/logo.png"
+              alt=""
+              aria-hidden="true"
+              className="w-[175%] max-w-none opacity-[0.06] object-contain"
+            />
+          </div>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 55 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 1, ease: [0.25, 0, 0, 1] as const }}
+            className="text-[clamp(2.25rem,8vw,6rem)] font-black tracking-tighter text-[#1A1A18] mb-6 md:mb-8 max-w-5xl relative z-10"
+          >
             FEED YOUR REAL SELF.
-          </h2>
-          <p className="text-base sm:text-lg md:text-2xl text-white/50 font-light mb-10 md:mb-12 max-w-2xl z-10">
-            Carrer del Rec 10, El Born, Barcelona · C/ San Mateo 30, Alonso Martínez, Madrid. Open daily, no reservations required.
-          </p>
-          <button className="px-8 py-4 md:px-12 md:py-5 bg-white text-black font-bold tracking-widest uppercase text-sm hover:bg-white/90 hover:scale-105 transition-all duration-300 rounded-full z-10">
-            Find a Location
-          </button>
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.25, 0, 0, 1] as const }}
+            className="text-base sm:text-lg md:text-xl text-[#6B6760] font-light mb-10 md:mb-14 max-w-2xl relative z-10"
+          >
+            Carrer del Rec 10, El Born, Barcelona · C/ San Mateo 30, Alonso Martínez, Madrid.
+            <br className="hidden md:block" /> Open daily, no reservations required.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, delay: 0.28, ease: [0.25, 0, 0, 1] as const }}
+            className="relative z-10"
+          >
+            <button className="px-9 py-4 md:px-12 md:py-5 bg-[#1A1A18] text-white font-semibold tracking-[0.12em] uppercase text-[13px] hover:opacity-70 hover:scale-[1.03] transition-all duration-300 rounded-full">
+              Find a Location
+            </button>
+          </motion.div>
         </section>
 
-        {/* Footer */}
-        <footer className="py-16 md:py-24 px-6 md:px-24 border-t border-white/10 flex flex-col items-center">
-          <img src="/logo.png" alt="EAT.NUDES Logo" className="h-12 md:h-16 invert mb-10 md:mb-12 object-contain" />
-          <div className="flex flex-wrap justify-center gap-6 md:gap-12 text-sm text-white/50 font-mono uppercase tracking-widest mb-12 md:mb-16">
+        {/* — Footer — dark for a strong brand close — */}
+        <footer className="bg-[#1A1A18] py-16 md:py-24 px-6 md:px-24 flex flex-col items-center">
+
+          {/* Large secondary wordmark */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.9, ease: [0.25, 0, 0, 1] as const }}
+            className="mb-10 md:mb-14"
+          >
+            <img
+              src="/logo.png"
+              alt="NUDES™"
+              className="h-12 md:h-[4.5rem] object-contain invert opacity-85"
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-6 md:gap-12 text-[11px] text-white/40 font-mono uppercase tracking-[0.2em] mb-10 md:mb-14"
+          >
             <a href="#" className="hover:text-white transition-colors">Menu</a>
             <a href="#" className="hover:text-white transition-colors">Our Story</a>
             <a href="#" className="hover:text-white transition-colors">Locations</a>
             <a href="https://www.instagram.com/eat.nudes/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</a>
             <a href="#" className="hover:text-white transition-colors">Order Online</a>
-          </div>
-          <div className="flex flex-col items-center gap-2 text-xs text-white/30 font-mono tracking-wider text-center">
+          </motion.div>
+
+          <div className="flex flex-col items-center gap-2 text-[10px] text-white/20 font-mono tracking-[0.1em] text-center">
             <span>CARRER DEL REC 10, EL BORN, BARCELONA · C/ SAN MATEO 30, ALONSO MARTÍNEZ, MADRID</span>
             <span>© {new Date().getFullYear()} NUDES™. ALL RIGHTS RESERVED.</span>
           </div>
         </footer>
+
       </div>
     </main>
   );
