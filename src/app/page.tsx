@@ -344,16 +344,6 @@ export default function Home() {
         {/* — CTA Banner — */}
         <section className="py-28 md:py-52 px-6 md:px-24 border-t border-[#E2DDD5] relative overflow-hidden flex flex-col items-center text-center">
 
-          {/* Wordmark ghost watermark — pinned to bottom so it sits below the headline */}
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-center pointer-events-none select-none pb-10 md:pb-16">
-            <img
-              src="/logo-wordmark.png"
-              alt=""
-              aria-hidden="true"
-              className="w-[85%] max-w-3xl opacity-[0.07] object-contain invert"
-            />
-          </div>
-
           <motion.h2
             initial={{ opacity: 0, y: 55 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -383,9 +373,18 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.7, delay: 0.28, ease: [0.25, 0, 0, 1] as const }}
-            className="relative z-10"
+            className="relative"
           >
-            <button className="px-9 py-4 md:px-12 md:py-5 bg-[#1A1A18] text-white font-semibold tracking-[0.12em] uppercase text-[13px] hover:opacity-70 hover:scale-[1.03] transition-all duration-300 rounded-full">
+            {/* Wordmark watermark centred behind the button */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] md:w-[720px] pointer-events-none select-none">
+              <img
+                src="/logo-wordmark.png"
+                alt=""
+                aria-hidden="true"
+                className="w-full opacity-[0.07] object-contain invert"
+              />
+            </div>
+            <button className="relative z-10 px-9 py-4 md:px-12 md:py-5 bg-[#1A1A18] text-white font-semibold tracking-[0.12em] uppercase text-[13px] hover:opacity-70 hover:scale-[1.03] transition-all duration-300 rounded-full">
               Find a Location
             </button>
           </motion.div>
