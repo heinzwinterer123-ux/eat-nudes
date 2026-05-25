@@ -376,7 +376,7 @@ export default function Home() {
             className="relative"
           >
             {/* Wordmark watermark centred behind the button */}
-            <div className="absolute top-[53%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] md:w-[720px] pointer-events-none select-none">
+            <div className="absolute top-[56%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] md:w-[720px] pointer-events-none select-none">
               <img
                 src="/logo-wordmark.png"
                 alt=""
