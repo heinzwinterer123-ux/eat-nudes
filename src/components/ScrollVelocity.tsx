@@ -3,8 +3,11 @@
 /**
  * ScrollVelocity — Magic UI "scroll-based-velocity" component.
  *
- * Text rows scroll horizontally; scroll speed changes their velocity.
- * Odd-indexed rows run in reverse so the two lines feel dynamic together.
+ * Text rows drift slowly at rest and speed up proportionally to scroll velocity.
+ * Odd rows run in reverse.
+ *
+ * Mobile fix: velocityFactor is hard-clamped so iOS momentum spikes can't
+ * send the strip flying; spring damping is high to kill oscillation.
  */
 
 import { useRef } from 'react';
@@ -23,9 +26,8 @@ import {
 
 interface VelocityRowProps {
   children: string;
-  /** Base pixels/second when the user isn't scrolling */
+  /** Pixels per second at rest — keep low (12–25) for a gentle drift */
   baseVelocity?: number;
-  /** Number of repetitions in the marquee strip */
   numCopies?: number;
   className?: string;
   separatorClassName?: string;
@@ -33,31 +35,42 @@ interface VelocityRowProps {
 
 function VelocityRow({
   children,
-  baseVelocity = 80,
+  baseVelocity = 15,
   numCopies = 8,
   className = '',
   separatorClassName = '',
 }: VelocityRowProps) {
-  const baseX           = useMotionValue(0);
-  const { scrollY }     = useScroll();
-  const scrollVelocity  = useVelocity(scrollY);
-  const smoothVelocity  = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
-  // Map scroll velocity → speed multiplier (-2 … +2)
-  const velocityFactor  = useTransform(smoothVelocity, [-1200, 1200], [-4, 4], { clamp: false });
+  const baseX          = useMotionValue(0);
+  const { scrollY }    = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
 
-  // Wrap baseX into a CSS translate that seamlessly loops
+  // High damping + low stiffness → absorbs iOS momentum spikes smoothly
+  const smoothVelocity = useSpring(scrollVelocity, { damping: 80, stiffness: 200 });
+
+  // Clamp multiplier to ±2 so mobile scroll bursts stay readable
+  const velocityFactor = useTransform(
+    smoothVelocity,
+    [-800, 800],
+    [-2, 2],
+    { clamp: true },          // ← hard cap; prevents mobile spike glitches
+  );
+
+  // Wrap baseX % seamlessly: one copy = 100/numCopies % of total width
   const x = useTransform(baseX, (v) => `${wrap(-100 / numCopies, 0, v)}%`);
 
   const directionRef = useRef<1 | -1>(1);
 
   useAnimationFrame((_t, delta) => {
+    // Base drift: e.g. 15 px/s → 0.25 px at 60 fps — barely perceptible
     let moveBy = directionRef.current * baseVelocity * (delta / 1000);
 
-    // Flip direction based on scroll direction
-    if (velocityFactor.get() < 0)      directionRef.current = -1;
+    // Flip direction on scroll direction change
+    if      (velocityFactor.get() < 0) directionRef.current = -1;
     else if (velocityFactor.get() > 0) directionRef.current = 1;
 
+    // Add scroll boost (clamped, so max total is baseVelocity × 3)
     moveBy += directionRef.current * moveBy * velocityFactor.get();
+
     baseX.set(baseX.get() + moveBy);
   });
 
@@ -65,12 +78,12 @@ function VelocityRow({
     <div className="overflow-hidden">
       <motion.div
         className={`flex whitespace-nowrap ${className}`}
-        style={{ x }}
+        style={{ x, willChange: 'transform' }}
       >
         {Array.from({ length: numCopies }).map((_, i) => (
-          <span key={i} className="flex items-center gap-0">
+          <span key={i} className="flex items-center">
             {children}
-            <span className={`mx-6 select-none ${separatorClassName}`} aria-hidden>·</span>
+            <span className={`mx-5 select-none ${separatorClassName}`} aria-hidden>·</span>
           </span>
         ))}
       </motion.div>
@@ -81,11 +94,9 @@ function VelocityRow({
 // ─── Public component ─────────────────────────────────────────────────────────
 
 interface ScrollVelocityProps {
-  /** Each string becomes one scrolling row; odd rows reverse direction */
   rows: string[];
   baseVelocity?: number;
   numCopies?: number;
-  /** Tailwind classes applied to each row's text */
   textClassName?: string;
   separatorClassName?: string;
   className?: string;
@@ -93,7 +104,7 @@ interface ScrollVelocityProps {
 
 export function ScrollVelocity({
   rows,
-  baseVelocity = 80,
+  baseVelocity = 15,
   numCopies = 8,
   textClassName = '',
   separatorClassName = '',

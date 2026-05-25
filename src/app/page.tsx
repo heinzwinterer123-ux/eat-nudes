@@ -299,11 +299,11 @@ export default function Home() {
           {/* Scroll-velocity marquee */}
           <ScrollVelocity
             rows={['CLEAN · FRESH · OBSESSIVE', 'NO FILLER · MADE DAILY · YOUR WAY']}
-            baseVelocity={60}
-            numCopies={6}
-            className="py-8 md:py-10 border-b border-[#E2DDD5] overflow-hidden"
-            textClassName="text-[clamp(1.4rem,4vw,2.5rem)] font-bold tracking-tight text-[#1A1A18] uppercase"
-            separatorClassName="text-[#1A1A18]/30"
+            baseVelocity={18}
+            numCopies={8}
+            className="py-7 md:py-10 border-b border-[#E2DDD5]"
+            textClassName="text-xl md:text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-tight text-[#1A1A18] uppercase"
+            separatorClassName="text-[#1A1A18]/25"
           />
 
           {/* Three cards */}
