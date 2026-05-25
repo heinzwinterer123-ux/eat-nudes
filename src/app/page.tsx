@@ -10,6 +10,7 @@ import {
   useMotionValueEvent,
 } from 'framer-motion';
 import MatchaCanvas from '@/components/MatchaCanvas';
+import { ScrollVelocity } from '@/components/ScrollVelocity';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -293,47 +294,50 @@ export default function Home() {
       >
 
         {/* — Ingredients / Craftsmanship — */}
-        <section className="py-24 md:py-40 px-6 md:px-24 border-t border-[#E2DDD5]">
-          <div className="max-w-5xl mx-auto">
+        <section className="border-t border-[#E2DDD5]">
 
-            <motion.h3
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.9, ease: [0.25, 0, 0, 1] as const }}
-              className="text-2xl sm:text-3xl md:text-5xl font-light text-[#1A1A18] mb-14 md:mb-20 max-w-xl leading-tight"
-            >
-              Clean.<br />Fresh.<br />Obsessive.
-            </motion.h3>
+          {/* Scroll-velocity marquee */}
+          <ScrollVelocity
+            rows={['CLEAN · FRESH · OBSESSIVE', 'NO FILLER · MADE DAILY · YOUR WAY']}
+            baseVelocity={60}
+            numCopies={6}
+            className="py-8 md:py-10 border-b border-[#E2DDD5] overflow-hidden"
+            textClassName="text-[clamp(1.4rem,4vw,2.5rem)] font-bold tracking-tight text-[#1A1A18] uppercase"
+            separatorClassName="text-[#1A1A18]/30"
+          />
 
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-20"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.1 }}
-              variants={staggerCards}
-            >
-              {[
-                {
-                  title: 'No Filler. Ever.',
-                  body:  "Artificial colours, flavours, preservatives — none of them made the cut. If we can't say it out loud, it's not going in.",
-                },
-                {
-                  title: 'Made Every Morning',
-                  body:  "Rolls wrapped, bowls built, smoothies blended fresh daily. Because day-old health food isn't health food.",
-                },
-                {
-                  title: 'Your Way',
-                  body:  'Vegan, gluten-free, high-protein — you set the rules. We make sure you leave satisfied, whatever that looks like for you.',
-                },
-              ].map((card) => (
-                <motion.div key={card.title} variants={cardVariant}>
-                  <div className="h-px w-10 bg-[#1A1A18]/20 mb-7" />
-                  <h4 className="text-base font-bold text-[#1A1A18] mb-3 tracking-wide">{card.title}</h4>
-                  <p className="text-[#6B6760] font-light leading-relaxed text-[15px]">{card.body}</p>
-                </motion.div>
-              ))}
-            </motion.div>
+          {/* Three cards */}
+          <div className="py-20 md:py-32 px-6 md:px-24">
+            <div className="max-w-5xl mx-auto">
+              <motion.div
+                className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-20"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+                variants={staggerCards}
+              >
+                {[
+                  {
+                    title: 'No Filler. Ever.',
+                    body:  "Artificial colours, flavours, preservatives — none of them made the cut. If we can't say it out loud, it's not going in.",
+                  },
+                  {
+                    title: 'Made Every Morning',
+                    body:  "Rolls wrapped, bowls built, smoothies blended fresh daily. Because day-old health food isn't health food.",
+                  },
+                  {
+                    title: 'Your Way',
+                    body:  'Vegan, gluten-free, high-protein — you set the rules. We make sure you leave satisfied, whatever that looks like for you.',
+                  },
+                ].map((card) => (
+                  <motion.div key={card.title} variants={cardVariant}>
+                    <div className="h-px w-10 bg-[#1A1A18]/20 mb-7" />
+                    <h4 className="text-base font-bold text-[#1A1A18] mb-3 tracking-wide">{card.title}</h4>
+                    <p className="text-[#6B6760] font-light leading-relaxed text-[15px]">{card.body}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
           </div>
         </section>
 
