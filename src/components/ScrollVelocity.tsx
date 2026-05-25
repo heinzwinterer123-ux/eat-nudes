@@ -1,16 +1,24 @@
 'use client';
 
 /**
- * ScrollVelocity — scroll-based marquee.
+ * ScrollVelocity — pixel-accurate scroll-based marquee.
  *
- * Key design decisions:
- * - Direction is fixed by the sign of baseVelocity — never flips.
- *   Flipping caused: (a) desktop jitter as velocity oscillated near 0,
- *   (b) mobile loops that never completed after an upward scroll.
- * - Math.abs(velocityFactor) means ANY scroll direction speeds the text up.
- * - velocityFactor is hard-clamped to prevent iOS momentum spikes.
+ * Why not wrap() + percentages (previous approach):
+ *   wrap(-100/n, 0, v)% works going right, but for leftward rows the
+ *   wrap boundary fires in the wrong direction and snaps the strip
+ *   to a different visual position → the "glitch / stops in middle" bug.
+ *
+ * Fix: measure the rendered width of one copy in pixels, then use simple
+ * modulo arithmetic on a totalDistance counter that only ever increases.
+ * No direction flipping, no wrap function, no percentage translations.
+ *
+ *   leftward:  x = -(totalDist % copyWidth)         → 0 → -copyWidth → 0 …
+ *   rightward: x =  (totalDist % copyWidth) - copyWidth → -copyWidth → 0 → -copyWidth …
+ *
+ * Both loops are seamless because adjacent copies are identical.
  */
 
+import { useEffect, useRef } from 'react';
 import {
   motion,
   useScroll,
@@ -19,14 +27,13 @@ import {
   useMotionValue,
   useVelocity,
   useAnimationFrame,
-  wrap,
 } from 'framer-motion';
 
-// ─── Single scrolling row ─────────────────────────────────────────────────────
+// ─── Single row ───────────────────────────────────────────────────────────────
 
 interface VelocityRowProps {
   children: string;
-  /** px/s drift at rest — keep 8-15 for a gentle ticker feel */
+  /** px/s base drift. Positive = leftward, negative = rightward. */
   baseVelocity?: number;
   numCopies?: number;
   className?: string;
@@ -40,32 +47,43 @@ function VelocityRow({
   className = '',
   separatorClassName = '',
 }: VelocityRowProps) {
-  const baseX          = useMotionValue(0);
+  const x          = useMotionValue(0);
+  const copyRef    = useRef<HTMLSpanElement>(null);
+  const copyWidth  = useRef(0);   // measured px width of one copy
+  const totalDist  = useRef(0);   // always-increasing distance counter
+
+  // Measure one copy's pixel width after mount / on resize
+  useEffect(() => {
+    const measure = () => {
+      if (copyRef.current) copyWidth.current = copyRef.current.offsetWidth;
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  // Scroll velocity → speed boost
   const { scrollY }    = useScroll();
   const scrollVelocity = useVelocity(scrollY);
-
-  // Smooth out spiky iOS momentum scroll events
   const smoothVelocity = useSpring(scrollVelocity, { damping: 80, stiffness: 150 });
+  // Always positive [0, 2]: any scroll direction speeds things up
+  const velocityFactor = useTransform(smoothVelocity, [-600, 600], [0, 2], { clamp: true });
 
-  // Clamp multiplier — never let a mobile scroll burst blow up the speed
-  const velocityFactor = useTransform(
-    smoothVelocity,
-    [-600, 600],
-    [0, 2],             // always 0–2 (absolute), direction handled by sign of baseVelocity
-    { clamp: true },
-  );
-
-  // Wrap x% so the strip loops seamlessly: one copy = 100/numCopies % of total
-  const x = useTransform(baseX, (v) => `${wrap(-100 / numCopies, 0, v)}%`);
-
-  const sign = baseVelocity >= 0 ? 1 : -1;
-  const abs  = Math.abs(baseVelocity);
+  const isLeftward = baseVelocity >= 0;
+  const absV       = Math.abs(baseVelocity);
 
   useAnimationFrame((_t, delta) => {
-    // Scroll speeds up the drift (1× at rest, up to 3× at peak scroll)
-    const boost  = 1 + velocityFactor.get();      // 1 … 3
-    const moveBy = sign * abs * boost * (delta / 1000);
-    baseX.set(baseX.get() + moveBy);
+    const cw = copyWidth.current;
+    if (!cw) return;
+
+    const boost = 1 + velocityFactor.get();           // 1× … 3×
+    // Keep totalDist in [0, cw) to avoid float precision drift
+    totalDist.current = (totalDist.current + absV * boost * (delta / 1000)) % cw;
+
+    const pos = totalDist.current;
+    // Leftward:  starts at 0, moves to -cw, seamlessly jumps back to 0
+    // Rightward: starts at -cw, moves to 0, seamlessly jumps back to -cw
+    x.set(isLeftward ? -pos : pos - cw);
   });
 
   return (
@@ -75,7 +93,11 @@ function VelocityRow({
         style={{ x, willChange: 'transform' }}
       >
         {Array.from({ length: numCopies }).map((_, i) => (
-          <span key={i} className="flex items-center">
+          <span
+            key={i}
+            ref={i === 0 ? copyRef : null}
+            className="flex items-center"
+          >
             {children}
             <span className={`mx-5 select-none ${separatorClassName}`} aria-hidden>
               ·
@@ -111,7 +133,6 @@ export function ScrollVelocity({
       {rows.map((row, i) => (
         <VelocityRow
           key={i}
-          // odd rows run right-to-left (negative sign)
           baseVelocity={i % 2 === 0 ? baseVelocity : -baseVelocity}
           numCopies={numCopies}
           className={textClassName}
