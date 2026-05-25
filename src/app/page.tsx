@@ -340,16 +340,13 @@ export default function Home() {
         {/* — CTA Banner — */}
         <section className="py-28 md:py-56 px-6 md:px-24 border-t border-[#E2DDD5] relative overflow-hidden flex flex-col items-center text-center">
 
-          {/* Wordmark as a ghosted watermark behind the text.
-              mix-blend-mode:screen makes the black bg invisible,
-              leaving only the white NUDES text as a faint ghost. */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-               style={{ mixBlendMode: 'screen' }}>
+          {/* Wordmark ghost watermark — transparent PNG, invert to dark on light bg */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
             <img
               src="/logo-wordmark.png"
               alt=""
               aria-hidden="true"
-              className="w-[175%] max-w-none opacity-[0.12] object-contain"
+              className="w-[175%] max-w-none opacity-[0.07] object-contain invert"
             />
           </div>
 
@@ -398,12 +395,11 @@ export default function Home() {
             transition={{ duration: 0.9, ease: [0.25, 0, 0, 1] as const }}
             className="mb-10 md:mb-14"
           >
-            {/* screen blend removes the black jpeg bg, only the white text shows */}
+            {/* transparent PNG — white text shows cleanly on the dark footer */}
             <img
               src="/logo-wordmark.png"
               alt="NUDES™"
               className="h-12 md:h-[4.5rem] object-contain opacity-90"
-              style={{ mixBlendMode: 'screen' }}
             />
           </motion.div>
 
