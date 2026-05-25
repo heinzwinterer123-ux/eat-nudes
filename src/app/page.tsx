@@ -345,12 +345,12 @@ export default function Home() {
         <section className="py-28 md:py-56 px-6 md:px-24 border-t border-[#E2DDD5] relative overflow-hidden flex flex-col items-center text-center">
 
           {/* Wordmark ghost watermark — transparent PNG, invert to dark on light bg */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
             <img
               src="/logo-wordmark.png"
               alt=""
               aria-hidden="true"
-              className="w-[175%] max-w-none opacity-[0.07] object-contain invert"
+              className="w-[85%] max-w-3xl opacity-[0.07] object-contain invert"
             />
           </div>
 
@@ -369,10 +369,13 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.25, 0, 0, 1] as const }}
-            className="text-base sm:text-lg md:text-xl text-[#6B6760] font-light mb-10 md:mb-14 max-w-2xl relative z-10"
+            className="text-base sm:text-lg md:text-xl text-[#6B6760] font-light mb-10 md:mb-14 max-w-2xl relative z-10 leading-relaxed"
           >
-            Carrer del Rec 10, El Born, Barcelona · C/ San Mateo 30, Alonso Martínez, Madrid.
-            <br className="hidden md:block" /> Open daily, no reservations required.
+            Carrer del Rec 10, El Born, Barcelona
+            <br />
+            C/ San Mateo 30, Alonso Martínez, Madrid
+            <br />
+            <span className="text-[#6B6760]/60 text-sm md:text-base">Open daily · No reservations required</span>
           </motion.p>
 
           <motion.div
@@ -421,9 +424,10 @@ export default function Home() {
             <a href="#" className="hover:text-white transition-colors">Order Online</a>
           </motion.div>
 
-          <div className="flex flex-col items-center gap-2 text-[10px] text-white/20 font-mono tracking-[0.1em] text-center">
-            <span>CARRER DEL REC 10, EL BORN, BARCELONA · C/ SAN MATEO 30, ALONSO MARTÍNEZ, MADRID</span>
-            <span>© {new Date().getFullYear()} NUDES™. ALL RIGHTS RESERVED.</span>
+          <div className="flex flex-col items-center gap-1.5 text-[10px] text-white/20 font-mono tracking-[0.1em] text-center">
+            <span>CARRER DEL REC 10, EL BORN, BARCELONA</span>
+            <span>C/ SAN MATEO 30, ALONSO MARTÍNEZ, MADRID</span>
+            <span className="mt-1">© {new Date().getFullYear()} NUDES™. ALL RIGHTS RESERVED.</span>
           </div>
         </footer>
 
