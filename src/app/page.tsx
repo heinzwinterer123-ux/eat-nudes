@@ -342,7 +342,7 @@ export default function Home() {
         </section>
 
         {/* — CTA Banner — */}
-        <section className="py-28 md:py-56 px-6 md:px-24 border-t border-[#E2DDD5] relative overflow-hidden flex flex-col items-center text-center">
+        <section className="py-40 md:py-80 px-6 md:px-24 border-t border-[#E2DDD5] relative overflow-hidden flex flex-col items-center text-center">
 
           {/* Wordmark ghost watermark — transparent PNG, invert to dark on light bg */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
