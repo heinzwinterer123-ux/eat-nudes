@@ -298,7 +298,7 @@ export default function Home() {
 
           {/* Scroll-velocity marquee */}
           <ScrollVelocity
-            rows={['CLEAN — FRESH — OBSESSIVE', 'NO FILLER — MADE DAILY — YOUR WAY']}
+            rows={['CLEAN · FRESH · OBSESSIVE', 'NO FILLER · MADE DAILY · YOUR WAY']}
             baseVelocity={10}
             numCopies={10}
             className="py-7 md:py-10 border-b border-[#E2DDD5]"
