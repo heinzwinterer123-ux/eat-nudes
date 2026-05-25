@@ -66,8 +66,8 @@ function VelocityRow({
   const { scrollY }    = useScroll();
   const scrollVelocity = useVelocity(scrollY);
   const smoothVelocity = useSpring(scrollVelocity, { damping: 80, stiffness: 150 });
-  // Always positive [0, 2]: any scroll direction speeds things up
-  const velocityFactor = useTransform(smoothVelocity, [-600, 600], [0, 2], { clamp: true });
+  // Always positive [0, 4]: any scroll direction speeds things up
+  const velocityFactor = useTransform(smoothVelocity, [-500, 500], [0, 4], { clamp: true });
 
   const isLeftward = baseVelocity >= 0;
   const absV       = Math.abs(baseVelocity);
@@ -99,7 +99,7 @@ function VelocityRow({
             className="flex items-center"
           >
             {children}
-            <span className={`mx-5 select-none ${separatorClassName}`} aria-hidden>
+            <span className={`mx-8 select-none ${separatorClassName}`} aria-hidden>
               ·
             </span>
           </span>
